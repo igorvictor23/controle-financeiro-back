@@ -2,7 +2,7 @@ const Transacao = require('../modelo/Transacoes');
 
 async function cadastrarTransacao(req,res) {
     try {
-        const id = req.user.idUsuario;
+        const id = req.user._id;
         const dados = {...req.body,idUsuario: id}
         const novaTransacao = await Transacao.create(dados);
         return res.status(201).json(novaTransacao);
@@ -14,7 +14,7 @@ async function cadastrarTransacao(req,res) {
 
 async function deletarTransacao(req,res) {
     try {
-        const id = req.user.idUsuario;
+        const id = req.user._id;
         const transacao = req.params.id;
         const tarefaDeletada = await Transacao.findOneAndDelete({_id: transacao, idUsuario: id});
         if(!tarefaDeletada) {
@@ -28,7 +28,7 @@ async function deletarTransacao(req,res) {
 
 async function atualizarTransacao(req, res) {
     try {
-        const userId = req.user.id; 
+        const userId = req.user._id; 
         const idTransacao = req.params.id;
         const novosDados = req.body;
 
@@ -54,7 +54,7 @@ async function atualizarTransacao(req, res) {
 
 async function mostrarTransacoes(req, res) {
     try {
-        const userId = req.user.id; 
+        const userId = req.user._id; 
         const { descricao, tipo, valor } = req.query;
 
         
@@ -85,7 +85,7 @@ async function mostrarTransacoes(req, res) {
 
 async function mostrarTransacao(req, res) {
     try {
-        const userId = req.user.id; 
+        const userId = req.user._id; 
         const idTransacao = req.params.id;
 
         
@@ -103,7 +103,7 @@ async function mostrarTransacao(req, res) {
 
 async function calcularSaldo(req, res) {
     try {
-        const userId = req.user.id; 
+        const userId = req.user._id; 
 
        
         const transacoes = await Transacao.find({ userId: userId }); 
