@@ -17,7 +17,14 @@ const modeloTransacao = new mongoose.Schema({
     data: {
         type: Date,
         default: Date.now
+    },
+    idUsuario: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        index: true
     }
 });
+
+
 
 module.exports = mongoose.model('Transacao', modeloTransacao);

@@ -8,11 +8,15 @@ app.use(cors());
 const conexaoDB = require('./config/bancodedados');
 conexaoDB();
 
+const router = require('./rotas/rotasTransacao')
+app.use('/transacoes', router);
+
+const authrouter = require('./rotas/rotasAutenticacao')
+app.use('/auth', authrouter);
+
 const porta = 3000;
 app.listen(porta, () => {
     console.log(`Servidor rodando na porta ${porta}`);
 });
 
-const router = require('./rotas/rotasTransacao')
-app.use('/', router);
 

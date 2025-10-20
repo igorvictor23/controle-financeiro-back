@@ -1,8 +1,10 @@
-const Transacao = require('../modelo/modelos');
+const Transacao = require('../modelo/Transacoes');
 
 async function cadastrarTransacao(req,res) {
     try {
-        const novaTransacao = await Transacao.create(req.body);
+        const id = req.user.idUsuario;
+        const dados = {...req.body,idUsuario: id}
+        const novaTransacao = await Transacao.create(dados);
         return res.status(201).json(novaTransacao);
     } catch (error) {
         return res.status(400).json({message: "Erro ao cadastrar a Transação!", error: error.message});
@@ -12,9 +14,11 @@ async function cadastrarTransacao(req,res) {
 
 async function deletarTransacao(req,res) {
     try {
-        const tarefaDeletada = await Transacao.findByIdAndDelete(req.params.id);
+        const id = req.user.idUsuario;
+        const transacao = req.params.id;
+        const tarefaDeletada = await Transacao.findOneAndDelete({_id: transacao, idUsuario: id});
         if(!tarefaDeletada) {
-            return res.status(404).json({message: "Transação não encontrada!"});
+            return res.status(404).json({ message: "Transação não encontrada ou você não tem permissão para deletá-la!" });
         };
         return res.status(200).json({message: "Transação deletada com sucesso!"});
     } catch (error) {
@@ -22,75 +26,112 @@ async function deletarTransacao(req,res) {
     };
 };
 
-async function atualizarTransacao(req,res) {
+async function atualizarTransacao(req, res) {
     try {
-        const id = req.params.id;
+        const userId = req.user.id; 
+        const idTransacao = req.params.id;
         const novosDados = req.body;
-        const tarefaAtualizada = await Transacao.findByIdAndUpdate(id,novosDados,{new: true});
-        if(!tarefaAtualizada) {
-            return res.status(404).json({message: "Transação não encontrada!"});
-        }; 
-        return res.status(200).json({message: "Transação atualizada com sucesso!"});
+
+        
+        const tarefaAtualizada = await Transacao.findOneAndUpdate(
+            { _id: idTransacao, userId: userId }, 
+            novosDados,                          
+            { new: true, runValidators: true }   
+        );
+
+        if (!tarefaAtualizada) {
+           
+            return res.status(404).json({ message: "Transação não encontrada ou você não tem permissão para editá-la!" });
+        }
+        
+        return res.status(200).json(tarefaAtualizada); 
 
     } catch (error) {
-        return res.status(400).json({message: "Erro ao atualizar a Transação!", error: error.message});
+        return res.status(400).json({ message: "Erro ao atualizar a Transação!", error: error.message });
     };
 };
 
 
-async function mostrarTransacoes(req,res) {
+async function mostrarTransacoes(req, res) {
     try {
-        const filtro = {};
-        const {descricao,tipo,valor} = req.query;
+        const userId = req.user.id; 
+        const { descricao, tipo, valor } = req.query;
 
-        if(descricao) {
-            filtro.descricao = {$regex:descricao, $options: 'i' };
-        };
+        
+        const filtro = { userId: userId }; 
 
-        if(tipo) {
-            filtro.tipo = tipo;       
-        };
-
-        if(valor) {
-            filtro.valor = valor;
-        };
-        const transacoes = await Transacao.find(filtro);
+        if (descricao) {
+            filtro.descricao = { $regex: descricao, $options: 'i' };
+        }
+        if (tipo) {
+            filtro.tipo = tipo;
+        }
+        if (valor) {
+            
+            const valorNumerico = parseFloat(valor); 
+            if (!isNaN(valorNumerico)) { 
+                 filtro.valor = valorNumerico;
+            }
+        }
+        
+        
+        const transacoes = await Transacao.find(filtro); 
         return res.status(200).json(transacoes);
     } catch (error) {
-        return res.status(400).json({message: "Erro ao buscar as Transações!", error: error.message});
+         
+        return res.status(500).json({ message: "Erro ao buscar as Transações!", error: error.message }); 
     };
 };
 
-async function mostrarTransacao(req,res) {
+async function mostrarTransacao(req, res) {
     try {
-        const id = req.params.id;
-        const transacao = await Transacao.findById(id);
-        if(!Transacao) {
-            return res.status(404).json({message: "Transação não encontrada!"});
-        };
+        const userId = req.user.id; 
+        const idTransacao = req.params.id;
+
+        
+        const transacao = await Transacao.findOne({ _id: idTransacao, userId: userId }); 
+
+       
+        if (!transacao) { 
+            return res.status(404).json({ message: "Transação não encontrada!" });
+        }
         return res.status(200).json(transacao);
     } catch (error) {
-        return res.status(400).json({message: "Erro ao buscar a Transação!", error: error.message});
+        return res.status(400).json({ message: "Erro ao buscar a Transação!", error: error.message });
     };
 };
 
-async function calcularSaldo(req,res) {
+async function calcularSaldo(req, res) {
     try {
-        const receitas = await Transacao.find({tipo: 'receita'});
-        const despesas = await Transacao.find({tipo: 'despesa'});
-        const totalReceitas = receitas.reduce((acumulador, valorAtual)=> {
-            return acumulador + valorAtual.valor;
-        },0);
-        const totalDespesas = despesas.reduce((acumulador, valorAtual) => {
-            return acumulador + valorAtual.valor;
-        },0);
+        const userId = req.user.id; 
+
+       
+        const transacoes = await Transacao.find({ userId: userId }); 
+
+        let totalReceitas = 0;
+        let totalDespesas = 0;
+
+        transacoes.forEach(transacao => {
+            if (transacao.tipo === 'receita') {
+                totalReceitas += transacao.valor;
+            } else { 
+                totalDespesas += transacao.valor;
+            }
+        });
+
         const saldo = totalReceitas - totalDespesas;
-        return res.status(200).json({receitas:totalReceitas,despesas:totalDespesas,saldo: saldo});
-        
+
+        return res.status(200).json({ 
+            receitas: totalReceitas, 
+            despesas: totalDespesas, 
+            saldo: saldo 
+        });
+
     } catch (error) {
-        return res.status(400).json({message: "Erro ao calcular o saldo!", error: error.message});
-    };
-};
+         
+        return res.status(500).json({ message: "Erro ao calcular o saldo!", error: error.message }); 
+    }
+}
 
 
 

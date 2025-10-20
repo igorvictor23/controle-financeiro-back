@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
-
+const { protect } = require('../middlewares/authmiddlewares');
 const controladorTransacoes = require('../controladores/controladorTransacoes');
 
-router.post('/transacoes', controladorTransacoes.cadastrarTransacao);
-router.delete('/transacoes/:id', controladorTransacoes.deletarTransacao);
-router.put('/transacoes/:id', controladorTransacoes.atualizarTransacao);
-router.get('/transacoes', controladorTransacoes.mostrarTransacoes);
-router.get('/transacoes/resumo', controladorTransacoes.calcularSaldo);
-router.get('/transacoes/:id', controladorTransacoes.mostrarTransacao);
+router.use(protect); 
+
+router.post('/', controladorTransacoes.cadastrarTransacao);
+router.delete('/:id', controladorTransacoes.deletarTransacao);
+router.put('/:id', controladorTransacoes.atualizarTransacao);
+router.get('/', controladorTransacoes.mostrarTransacoes);
+router.get('/resumo', controladorTransacoes.calcularSaldo);
+router.get('/:id', controladorTransacoes.mostrarTransacao);
 
 
 
