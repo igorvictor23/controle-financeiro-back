@@ -34,7 +34,7 @@ async function atualizarTransacao(req, res) {
 
         
         const tarefaAtualizada = await Transacao.findOneAndUpdate(
-            { _id: idTransacao, userId: userId }, 
+            { _id: idTransacao, idUsuario: userId }, 
             novosDados,                          
             { new: true, runValidators: true }   
         );
@@ -58,7 +58,7 @@ async function mostrarTransacoes(req, res) {
         const { descricao, tipo, valor } = req.query;
 
         
-        const filtro = { userId: userId }; 
+        const filtro = { idUsuario: userId }; 
 
         if (descricao) {
             filtro.descricao = { $regex: descricao, $options: 'i' };
@@ -89,7 +89,7 @@ async function mostrarTransacao(req, res) {
         const idTransacao = req.params.id;
 
         
-        const transacao = await Transacao.findOne({ _id: idTransacao, userId: userId }); 
+        const transacao = await Transacao.findOne({ _id: idTransacao, idUsuario: userId }); 
 
        
         if (!transacao) { 
@@ -106,7 +106,7 @@ async function calcularSaldo(req, res) {
         const userId = req.user._id; 
 
        
-        const transacoes = await Transacao.find({ userId: userId }); 
+        const transacoes = await Transacao.find({ idUsuario: userId }); 
 
         let totalReceitas = 0;
         let totalDespesas = 0;

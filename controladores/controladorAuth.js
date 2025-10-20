@@ -19,7 +19,7 @@ exports.registro = async (req,res) => {
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
 
-        const novoUsuario = Usuario.create({
+        const novoUsuario = await Usuario.create({
             nome : nome,
             email : email,
             senha: senhaHash
